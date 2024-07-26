@@ -4,8 +4,8 @@ import os
 import json
 import requests
 
-# Set your OpenAI API key
-openai.api_key = st.secrets['OPENAI_API_KEY']
+# Set your OpenAI API key from secrets
+openai.api_key = st.secrets["general"]["openai_api_key"]
 
 # Function to load training data from GitHub
 def lade_trainingsdaten_von_github(url):
@@ -68,3 +68,8 @@ for eintrag in chat_history:
         st.write(f"AventraGPT: {eintrag['content']}")
     elif eintrag['role'] == 'system':
         st.write(f"System: {eintrag['content']}")
+
+# Display secrets for debugging purposes (remove in production)
+st.write("DB username:", st.secrets["database"]["db_username"])
+st.write("DB password:", st.secrets["database"]["db_password"])
+st.write("My cool secrets:", st.secrets["my_cool_secrets"]["things_i_like"])
