@@ -33,7 +33,7 @@ def generiere_antwort(prompt):
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=chat_history,
-            max_tokens=150,
+            max_tokens=600,
             n=1,
             stop=None,
             temperature=0.7
@@ -47,7 +47,7 @@ def generiere_antwort(prompt):
         return str(e)
 
 # Streamlit App
-st.title("AventraGPT")
+st.title("AventraGPT_Play")
 
 # Eingabefeld für den Prompt
 prompt = st.text_input("Du: ")
@@ -56,7 +56,7 @@ prompt = st.text_input("Du: ")
 if st.button("Senden"):
     if prompt:
         antwort = generiere_antwort(prompt)
-        st.text_area("LLM:", value=antwort, height=200, max_chars=None)
+        st.text_area("AventraGPT:", value=antwort, height=200, max_chars=None)
 
 # Datei-Upload für Trainingsdaten
 uploaded_file = st.file_uploader("Trainingsdaten hochladen", type=["txt"])
