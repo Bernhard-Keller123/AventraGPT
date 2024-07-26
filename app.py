@@ -3,6 +3,7 @@ import streamlit as st
 import json
 import chardet
 import requests
+import os
 
 # Setze deinen OpenAI API-Schlüssel hier ein
 openai.api_key = os.getenv('OPENAI_API_KEY')
