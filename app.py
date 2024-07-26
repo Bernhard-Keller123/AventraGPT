@@ -1,4 +1,4 @@
-import openai
+vimport openai
 import streamlit as st
 import os
 import json
@@ -24,17 +24,21 @@ chat_history = [{"role": "system", "content": json.dumps(trainingsdaten)}]
 def generiere_antwort(prompt):
     chat_history.append({"role": "user", "content": prompt})
     try:
-        response = openai.ChatCompletion.create(
+        # Flatten chat history to the format required by the new API
+        messages = [{"role": entry["role"], "content": entry["content"]} for entry in chat_history]
+
+        response = openai.Completion.create(
             model="gpt-3.5-turbo",
-            messages=chat_history,
+            prompt='\n'.join([msg['content'] for msg in messages]),
             max_tokens=600,
             temperature=0.7
         )
+
         # Debug print to inspect the response structure
         st.write("API Response:", response)
 
         # Access the response content
-        antwort = response['choices'][0]['message']['content'].strip()
+        antwort = response.choices[0].text.strip()
         chat_history.append({"role": "assistant", "content": antwort})
         return antwort
     except openai.OpenAIError as e:
