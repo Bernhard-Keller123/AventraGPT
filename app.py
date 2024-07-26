@@ -1,124 +1,89 @@
 import openai
 import streamlit as st
-import os
+import requests
 import json
-import chardet
-from openai import OpenAIError  # Correct import for OpenAIError
 
-# Setze deinen OpenAI API-Schlüssel hier ein
+# Greife auf den API-Schlüssel aus der Umgebungsvariable zu
 api_key = st.secrets['OPENAI_API']
-
-
 
 if not api_key:
     st.error("Kein API-Schlüssel gesetzt. Bitte setze die Umgebungsvariable OPENAI_API_KEY.")
 else:
     openai.api_key = api_key
-    #st.write(f"Der API-Schlüssel ist: {api_key}")
+    st.write(f"Der API-Schlüssel ist: {api_key}")
 
+# URL of the trainingsdaten.json file in your GitHub repository
+url = "https://raw.githubusercontent.com/Bernhard-Keller123/AventraGPT/main/trainingdata.json"
 
-# Funktion zum Laden der Trainingsdaten
-def lade_trainingsdaten_aus_datei(dateipfad):
+# Funktion zum Laden der Trainingsdaten von GitHub
+def lade_trainingsdaten_aus_github(url):
+    response = requests.get(url)
+    if response.status_code == 200:
+        return json.loads(response.content)
+    else:
+        st.error("Fehler beim Laden der Trainingsdaten von GitHub")
+        return []
+
+trainingsdaten = lade_trainingsdaten_aus_github(url)
+chat_history = [{"role": "system", "content": td} for td in trainingsdaten]
+
+def generiere_antwort(prompt):
+    chat_history.append({"role": "user", "content": prompt})
     try:
-        if os.path.exists(dateipfad):
-            with open(dateipfad, 'r', encoding='utf-8') as file:
-                return json.load(file)
-    except Exception as e:
-        st.error(f"Fehler beim Laden der Trainingsdaten: {e}")
-    return []
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=chat_history,
+            max_tokens=150,
+            n=1,
+            stop=None,
+            temperature=0.7
+        )
+        antwort = response.choices[0].message['content'].strip()
+        chat_history.append({"role": "assistant", "content": antwort})
+        return antwort
+    except openai.error.OpenAIError as e:
+        if "quota" in str(e):
+            return "Du hast dein aktuelles Nutzungslimit überschritten. Bitte überprüfe deinen Plan und deine Abrechnungsdetails unter https://platform.openai.com/account/usage."
+        return str(e)
 
+# Streamlit App
+st.title("AventraGPT")
 
-# Funktion zum Speichern der Trainingsdaten
-def speichere_trainingsdaten_in_datei(trainingsdaten, dateipfad):
-    try:
-        with open(dateipfad, 'w', encoding='utf-8') as file:
-            json.dump(trainingsdaten, file, ensure_ascii=False, indent=4)
-    except Exception as e:
-        st.error(f"Fehler beim Speichern der Trainingsdaten: {e}")
+# Eingabefeld für den Prompt
+prompt = st.text_input("Du: ")
 
+# Schaltfläche zum Senden des Prompts
+if st.button("Senden"):
+    if prompt:
+        antwort = generiere_antwort(prompt)
+        st.text_area("LLM:", value=antwort, height=200, max_chars=None)
 
-# Überprüfen, ob der Pfad zur Trainingsdatei schon existiert
-if 'trainingsdaten_pfad' not in st.session_state:
-    st.session_state['trainingsdaten_pfad'] = ''
+# Datei-Upload für Trainingsdaten
+uploaded_file = st.file_uploader("Trainingsdaten hochladen", type=["txt"])
 
-# Fenster zur Eingabe des Speicherpfads für die Trainingsdaten
-if st.session_state['trainingsdaten_pfad'] == '':
-    st.session_state['trainingsdaten_pfad'] = st.text_input(
-        "Bitte gib den Pfad ein, wo die Datei trainingsdaten.json gespeichert werden soll (z.B. /Pfad/zum/Ordner/trainingsdaten.json):")
-    if st.button("Pfad speichern"):
-        if st.session_state['trainingsdaten_pfad'] != '':
-            st.success(f"Pfad gesetzt: {st.session_state['trainingsdaten_pfad']}")
-            os.makedirs(os.path.dirname(st.session_state['trainingsdaten_pfad']), exist_ok=True)
-        else:
-            st.warning("Bitte gib einen gültigen Pfad ein.")
-else:
-    trainingsdaten = lade_trainingsdaten_aus_datei(st.session_state['trainingsdaten_pfad'])
-    chat_history = [{"role": "system", "content": td} for td in trainingsdaten]
-
-
-    def generiere_antwort(prompt):
-        chat_history.append({"role": "user", "content": prompt})
+# Schaltfläche zum Laden der Trainingsdaten
+if st.button("Trainingsdaten laden"):
+    if uploaded_file:
         try:
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=chat_history,
-                max_tokens=600,
-                stop=None,
-                temperature=0.7
-            )
-            antwort = response.choices[0].message['content'].strip()
-            chat_history.append({"role": "assistant", "content": antwort})
-            return antwort
-        except OpenAIError as e:  # Use the specific error class
-            if "quota" in str(e):
-                return "Du hast dein aktuelles Nutzungslimit überschritten. Bitte überprüfe deinen Plan und deine Abrechnungsdetails unter https://platform.openai.com/account/usage."
-            return str(e)
+            # Versuche, die Datei zu lesen und die Kodierung zu erkennen
+            raw_data = uploaded_file.read()
+            result = chardet.detect(raw_data)
+            encoding = result['encoding']
+            training_data = raw_data.decode(encoding)
 
+            trainingsdaten.append(training_data)
+            speichere_trainingsdaten_in_datei(trainingsdaten, st.session_state['trainingsdaten_pfad'])
+            chat_history.append({"role": "system", "content": training_data})
+            st.success("Trainingsdaten erfolgreich geladen.")
+        except Exception as e:
+            st.error(f"Fehler beim Laden der Datei: {e}")
 
-    def lade_trainingsdaten(uploaded_file):
-        if uploaded_file is not None:
-            try:
-                # Versuche, die Datei zu lesen und die Kodierung zu erkennen
-                raw_data = uploaded_file.read()
-                result = chardet.detect(raw_data)
-                encoding = result['encoding']
-                training_data = raw_data.decode(encoding)
-
-                trainingsdaten.append(training_data)
-                speichere_trainingsdaten_in_datei(trainingsdaten, st.session_state['trainingsdaten_pfad'])
-                chat_history.append({"role": "system", "content": training_data})
-                return "Trainingsdaten erfolgreich geladen."
-            except Exception as e:
-                return f"Fehler beim Laden der Datei: {e}"
-
-
-    # Streamlit App
-    st.title("AventraGPT_Play")
-
-    # Eingabefeld für den Prompt
-    prompt = st.text_input("Du: ")
-
-    # Schaltfläche zum Senden des Prompts
-    if st.button("Senden"):
-        if prompt:
-            antwort = generiere_antwort(prompt)
-            st.text_area("AventraGPT", value=antwort, height=200, max_chars=None)
-
-    # Datei-Upload für Trainingsdaten
-    uploaded_file = st.file_uploader("Trainingsdaten hochladen", type=["txt"])
-
-    # Schaltfläche zum Laden der Trainingsdaten
-    if st.button("Trainingsdaten laden"):
-        if uploaded_file:
-            meldung = lade_trainingsdaten(uploaded_file)
-            st.write(meldung)
-
-    # Anzeige des Gesprächsverlaufs
-    st.subheader("Gesprächsverlauf")
-    for eintrag in chat_history:
-        if eintrag['role'] == 'user':
-            st.write(f"Du: {eintrag['content']}")
-        elif eintrag['role'] == 'assistant':
-            st.write(f"AventraGPT: {eintrag['content']}")
-        elif eintrag['role'] == 'system':
-            st.write(f"System: {eintrag['content']}")
+# Anzeige des Gesprächsverlaufs
+st.subheader("Gesprächsverlauf")
+for eintrag in chat_history:
+    if eintrag['role'] == 'user':
+        st.write(f"Du: {eintrag['content']}")
+    elif eintrag['role'] == 'assistant':
+        st.write(f"LLM: {eintrag['content']}")
+    elif eintrag['role'] == 'system':
+        st.write(f"System: {eintrag['content']}")
