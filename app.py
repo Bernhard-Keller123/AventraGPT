@@ -29,7 +29,10 @@ def speichere_trainingsdaten_in_datei(trainingsdaten, dateipfad):
 # Initialisieren der Trainingsdaten und des Gesprächsverlaufs
 if 'trainingsdaten' not in st.session_state:
     st.session_state['trainingsdaten'] = lade_default_trainingsdaten()
-    st.session_state['chat_history'] = [{"role": "system", "content": json.dumps(td, ensure_ascii=False, indent=4)} for td in st.session_state['trainingsdaten']]
+    st.session_state['chat_history'] = [
+        {"role": "system", "content": json.dumps(td, ensure_ascii=False, indent=4)}
+        for td in st.session_state['trainingsdaten']
+    ]
 
 def generiere_antwort(prompt):
     chat_history = st.session_state['chat_history']
@@ -60,11 +63,14 @@ def lade_trainingsdaten(uploaded_file):
             result = chardet.detect(raw_data)
             encoding = result['encoding']
             training_data = raw_data.decode(encoding)
+            new_data = json.loads(training_data)  # Um sicherzustellen, dass die Trainingsdaten im JSON-Format vorliegen
 
-            st.session_state['trainingsdaten'].append(training_data)
+            st.session_state['trainingsdaten'].extend(new_data)  # Hinzufügen der neuen Trainingsdaten
             speichere_trainingsdaten_in_datei(st.session_state['trainingsdaten'], 'trainingsdaten.json')
             st.session_state['chat_history'].append({"role": "system", "content": training_data})
             return "Trainingsdaten erfolgreich geladen."
+        except json.JSONDecodeError:
+            return "Fehler beim Verarbeiten der JSON-Daten. Stelle sicher, dass die Datei korrekt formatiert ist."
         except Exception as e:
             return f"Fehler beim Laden der Datei: {e}"
 
@@ -81,7 +87,7 @@ if st.button("Senden"):
         st.text_area("AventraGPT", value=antwort, height=200, max_chars=None)
 
 # Datei-Upload für Trainingsdaten
-uploaded_file = st.file_uploader("Trainingsdaten hochladen", type=["txt"])
+uploaded_file = st.file_uploader("Trainingsdaten hochladen", type=["json"])
 
 # Schaltfläche zum Laden der Trainingsdaten
 if st.button("Trainingsdaten laden"):
