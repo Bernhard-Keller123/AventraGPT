@@ -1,39 +1,27 @@
 import openai
 import streamlit as st
+import os
 import json
 import requests
-import os
 
 # Setze deinen OpenAI API-Schlüssel hier ein
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
-# GitHub URL zum Trainingsdaten-JSON
-GITHUB_JSON_URL = 'https://raw.githubusercontent.com/Bernhard-Keller123/AventraGPT/main/trainingdata.json'
+# Funktion zum Laden der Trainingsdaten von GitHub
+def lade_trainingsdaten_von_github(url):
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()
+    return []
 
-# Funktion zum Laden der Trainingsdaten aus der GitHub-Datei
-def lade_default_trainingsdaten():
-    try:
-        response = requests.get(GITHUB_JSON_URL)
-        response.raise_for_status()  # Raise an HTTPError for bad responses
-        data = response.json()
-        # Bereinige und formatiere die Daten hier, falls nötig
-        return data
-    except requests.RequestException as e:
-        st.error(f"Fehler beim Laden der Standard-Trainingsdaten: {e}")
-        return []
+# URL zur trainingsdaten.json in deinem GitHub-Repository
+trainingsdaten_url = "https://raw.githubusercontent.com/Bernhard-Keller123/AventraGPT/main/trainingdata.json"
 
-# Funktion zum Speichern der Trainingsdaten in eine Datei
-def speichere_trainingsdaten_in_datei(trainingsdaten, dateipfad):
-    with open(dateipfad, 'w', encoding='utf-8') as file:
-        json.dump(trainingsdaten, file, ensure_ascii=False, indent=4)
-
-# Initialisieren der Trainingsdaten und des Gesprächsverlaufs
-if 'trainingsdaten' not in st.session_state:
-    st.session_state['trainingsdaten'] = lade_default_trainingsdaten()
-    st.session_state['chat_history'] = [{"role": "system", "content": json.dumps(td, ensure_ascii=False, indent=4)} for td in st.session_state['trainingsdaten']]
+# Trainingsdaten laden
+trainingsdaten = lade_trainingsdaten_von_github(trainingsdaten_url)
+chat_history = [{"role": "system", "content": td} for td in trainingsdaten]
 
 def generiere_antwort(prompt):
-    chat_history = st.session_state['chat_history']
     chat_history.append({"role": "user", "content": prompt})
     try:
         response = openai.ChatCompletion.create(
@@ -46,7 +34,6 @@ def generiere_antwort(prompt):
         )
         antwort = response.choices[0].message['content'].strip()
         chat_history.append({"role": "assistant", "content": antwort})
-        st.session_state['chat_history'] = chat_history
         return antwort
     except openai.error.OpenAIError as e:
         if "quota" in str(e):
@@ -67,7 +54,7 @@ if st.button("Senden"):
 
 # Anzeige des Gesprächsverlaufs
 st.subheader("Gesprächsverlauf")
-for eintrag in st.session_state['chat_history']:
+for eintrag in chat_history:
     if eintrag['role'] == 'user':
         st.write(f"Du: {eintrag['content']}")
     elif eintrag['role'] == 'assistant':
