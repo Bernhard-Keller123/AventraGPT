@@ -10,7 +10,7 @@ if not api_key:
     st.error("Kein API-Schlüssel gesetzt. Bitte setze die Umgebungsvariable OPENAI_API_KEY.")
 else:
     openai.api_key = api_key
-    st.write(f"Der API-Schlüssel ist: {api_key}")
+    st.write(f" ")
 
 # URL of the trainingsdaten.json file in your GitHub repository
 url = "https://raw.githubusercontent.com/Bernhard-Keller123/AventraGPT/main/trainingdata.json"
