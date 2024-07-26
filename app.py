@@ -6,7 +6,8 @@ import chardet
 from openai import OpenAIError  # Correct import for OpenAIError
 
 # Setze deinen OpenAI API-Schlüssel hier ein
-openai.api_key = 'sk-proj-dVM2eZJZVzU80bmPj0igT3BlbkFJ3wtkSYa0DUNo2Rf4uJhq'
+
+openai.api_key = st.secrets['OPENAI_API_KEY']
 
 
 # Funktion zum Laden der Trainingsdaten
