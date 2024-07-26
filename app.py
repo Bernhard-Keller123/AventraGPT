@@ -32,8 +32,9 @@ def generiere_antwort(prompt):
             stop=None,
             temperature=0.7
         )
+        st.write(response)  # Print the response to debug
         antwort = response.choices[0].message['content'].strip()
-        chat_history.append({"role": "assistant", "content": antwort)
+        chat_history.append({"role": "assistant", "content": antwort})
         return antwort
     except openai.error.OpenAIError as e:
         st.error(f"OpenAI API Error: {e}")
