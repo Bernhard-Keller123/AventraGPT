@@ -14,7 +14,7 @@ def lade_trainingsdaten_von_github(url):
         return response.json()
     return []
 
-# URL to trainingdata.json in your GitHub repository
+# URL to trainingsdaten.json in your GitHub repository
 trainingsdaten_url = "https://raw.githubusercontent.com/Bernhard-Keller123/AventraGPT/main/trainingdata.json"
 
 # Load training data
@@ -24,29 +24,21 @@ chat_history = [{"role": "system", "content": json.dumps(trainingsdaten)}]
 def generiere_antwort(prompt):
     chat_history.append({"role": "user", "content": prompt})
     try:
-        # Flatten chat history to the format required by the new API
-        messages = [{"role": entry["role"], "content": entry["content"]} for entry in chat_history]
-
-        response = openai.Completion.create(
+        response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            prompt='\n'.join([msg['content'] for msg in messages]),
+            messages=chat_history,
             max_tokens=600,
+            n=1,
+            stop=None,
             temperature=0.7
         )
-
-        # Debug print to inspect the response structure
-        st.write("API Response:", response)
-
-        # Access the response content
-        antwort = response.choices[0].text.strip()
+        st.write(response)  # Print the response to debug
+        antwort = response.choices[0].message['content'].strip()
         chat_history.append({"role": "assistant", "content": antwort})
         return antwort
-    except openai.OpenAIError as e:
+    except openai.OpenAIError as e:  # Updated error handling
         st.error(f"OpenAI API Error: {e}")
         return "There was an issue with the OpenAI API."
-    except KeyError as e:
-        st.error(f"Key Error: {e}")
-        return "There was an issue with the API response structure."
     except Exception as e:
         st.error(f"Unexpected Error: {e}")
         return "An unexpected error occurred."
