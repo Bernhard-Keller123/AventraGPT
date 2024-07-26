@@ -4,20 +4,20 @@ import os
 import json
 import requests
 
-# Setze deinen OpenAI API-Schlüssel hier ein
+# Set your OpenAI API key
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
-# Funktion zum Laden der Trainingsdaten von GitHub
+# Function to load training data from GitHub
 def lade_trainingsdaten_von_github(url):
     response = requests.get(url)
     if response.status_code == 200:
         return response.json()
     return []
 
-# URL zur trainingsdaten.json in deinem GitHub-Repository
+# URL to trainingsdaten.json in your GitHub repository
 trainingsdaten_url = "https://raw.githubusercontent.com/Bernhard-Keller123/AventraGPT/main/trainingdata.json"
 
-# Trainingsdaten laden
+# Load training data
 trainingsdaten = lade_trainingsdaten_von_github(trainingsdaten_url)
 chat_history = [{"role": "system", "content": td} for td in trainingsdaten]
 
@@ -33,26 +33,28 @@ def generiere_antwort(prompt):
             temperature=0.7
         )
         antwort = response.choices[0].message['content'].strip()
-        chat_history.append({"role": "assistant", "content": antwort})
+        chat_history.append({"role": "assistant", "content": antwort)
         return antwort
     except openai.error.OpenAIError as e:
-        if "quota" in str(e):
-            return "Du hast dein aktuelles Nutzungslimit überschritten. Bitte überprüfe deinen Plan und deine Abrechnungsdetails unter https://platform.openai.com/account/usage."
-        return str(e)
+        st.error(f"OpenAI API Error: {e}")
+        return "There was an issue with the OpenAI API."
+    except Exception as e:
+        st.error(f"Unexpected Error: {e}")
+        return "An unexpected error occurred."
 
 # Streamlit App
 st.title("AventraGPT_Play")
 
-# Eingabefeld für den Prompt
+# Input field for the prompt
 prompt = st.text_input("Du: ")
 
-# Schaltfläche zum Senden des Prompts
+# Button to send the prompt
 if st.button("Senden"):
     if prompt:
         antwort = generiere_antwort(prompt)
         st.text_area("AventraGPT", value=antwort, height=200, max_chars=None)
 
-# Anzeige des Gesprächsverlaufs
+# Display chat history
 st.subheader("Gesprächsverlauf")
 for eintrag in chat_history:
     if eintrag['role'] == 'user':
