@@ -5,7 +5,9 @@ import json
 import chardet
 
 # Greife auf den API-Schlüssel aus der Umgebungsvariable zu
-api_key = "sk-proj-hPGEYtUGV9ljosiIjjgVT3BlbkFJUI6BpHRh86xKd1Z01cTc"
+api_key = st.secrets['OPENAI_API']
+
+
 
 
 if not api_key:
