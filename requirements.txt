@@ -1,4 +1,4 @@
-openai
-streamlit
 chardet
-requests
+openai==0.28
+streamlit==1.37.0
+requests==2.32.3
