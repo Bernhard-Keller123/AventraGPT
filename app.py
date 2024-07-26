@@ -5,7 +5,7 @@ import json
 import requests
 
 # Set your OpenAI API key from secrets
-openai.api_key = 'sk-proj-dVM2eZJZVzU80bmPj0igT3BlbkFJ3wtkSYa0DUNo2Rf4uJhq'
+openai.api_key = st.secrets['OPENAI_API_KEY']
 
 
 # Function to load training data from GitHub
