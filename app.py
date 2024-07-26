@@ -5,8 +5,7 @@ import json
 import requests
 
 # Set your OpenAI API key
-# openai.api_key = os.getenv('OPENAI_API_KEY')
-openai.api_key = 'sk-proj-dVM2eZJZVzU80bmPj0igT3BlbkFJ3wtkSYa0DUNo2Rf4uJhq'
+openai.api_key = os.getenv('OPENAI_API_KEY')
 
 # Function to load training data from GitHub
 def lade_trainingsdaten_von_github(url):
@@ -34,7 +33,7 @@ def generiere_antwort(prompt):
             temperature=0.7
         )
         st.write(response)  # Print the response to debug
-        antwort = response.choices[0].message['content'].strip()
+        antwort = response['choices'][0]['message']['content'].strip()
         chat_history.append({"role": "assistant", "content": antwort})
         return antwort
     except openai.error.OpenAIError as e:
