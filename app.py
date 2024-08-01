@@ -3,7 +3,7 @@ import streamlit as st
 import requests
 import json
 
-# Greife auf den API-Schlüssel aus der Umgebungsvariable zu
+# Greife auf den API-Schlüssel aus der Umgebungsvariable 
 api_key = st.secrets['OPENAI_API']
 
 if not api_key:
