@@ -80,7 +80,7 @@ if st.button("Trainingsdaten laden"):
             st.error(f"Fehler beim Laden der Datei: {e}")
 
 # Anzeige des Gesprächsverlaufs
-st.subheader("Trainingsdaten und Gesprächsverlau")
+st.subheader("Trainingsdaten und Gesprächsverl")
 for eintrag in chat_history:
     if eintrag['role'] == 'user':
         st.write(f"Du: {eintrag['content']}")
