@@ -14,7 +14,7 @@ else:
     st.write(f" ")
 
 # URL of the trainingsdaten.json file in your GitHub repository
-url = "https://raw.githubusercontent.com/Bernhard-Keller123/AventraGPT/main/trainingdata.json"
+url = "https://raw.githubusercontent.com/Bernhard-Keller123/AventraGPT_Play/main/trainingdata.json"
 
 # Funktion zum Laden der Trainingsdaten von GitHub
 def lade_trainingsdaten_aus_github(url):
